@@ -1,0 +1,24 @@
+﻿<UserControl x:Class="SpaceShooter.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SpaceShooter"
+        mc:Ignorable="d"
+        Height="450" Width="800">
+
+    <Canvas Name="myCanvas" Focusable="True" Background="Black" KeyDown="KeyIsDown" KeyUp="KeyIsUp" MouseLeftButtonDown="MouseButtonDown">
+
+        <Label Name="score" Foreground="White" FontSize="16" FontWeight="DemiBold" HorizontalAlignment="Left" Canvas.Left="10" Canvas.Top="10" VerticalAlignment="Top">Score:</Label>
+        <Label Name="lives" Foreground="White" FontSize="16" FontWeight="DemiBold" HorizontalAlignment="Left" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom" Canvas.Bottom="10" Canvas.Left="10">Lives:</Label>
+
+        <Rectangle Name="player" Fill="White" Height="65" Width="56" Canvas.Left="372" Canvas.Top="359" HorizontalAlignment="Center" VerticalAlignment="Top"/>
+        <Image Name="explosionImage" Width="100" Height="100" Opacity="0" Canvas.Left="14" Canvas.Top="13" />
+
+
+
+    </Canvas>
+
+
+
+</UserControl>

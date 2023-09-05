@@ -1,0 +1,50 @@
+﻿<UserControl x:Class="SpaceShooter.Settings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:SpaceShooter"
+             mc:Ignorable="d" 
+             Focusable="True"
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid>
+        <Grid.Background>
+            <ImageBrush ImageSource="pack://application:,,,/images/menubackground.png" Stretch="UniformToFill"></ImageBrush>
+        </Grid.Background>
+
+        <Grid.Resources>
+            <Style TargetType="{x:Type Button}">
+                <Setter Property="Height" Value="40"></Setter>
+                <Setter Property="Width" Value="130"></Setter>
+                <Setter Property="FontSize" Value="20"></Setter>
+                <Setter Property="FontWeight" Value="Light"></Setter>
+                <Setter Property="FontFamily" Value="Nugo"></Setter>
+                <Setter Property="Foreground" Value="White"></Setter>
+                <Setter Property="Background" Value="Transparent"></Setter>
+                <Setter Property="BorderBrush" Value="Transparent"></Setter>
+
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Foreground" Value="Aquamarine"></Setter>
+                        <Setter Property="Background" Value="Transparent"></Setter>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        </Grid.Resources>
+
+
+        <StackPanel VerticalAlignment="Top" HorizontalAlignment="Left" Height="280" Width="130" Margin="100,100,0,0">
+            <Button Content="Up" Click="UpRebind" MouseEnter="Button_MouseEnter" Tag="MoveUpKey"/>
+            <Button Content="Down" Click="DownRebind" MouseEnter="Button_MouseEnter" Tag="MoveDownKey"/>
+            <Button Content="Left" Click="LeftRebind" MouseEnter="Button_MouseEnter" Tag="MoveLeftKey"/>
+            <Button Content="Right" Click="RightRebind" MouseEnter="Button_MouseEnter" Tag="MoveRightKey"/>
+            <Button Content="Fire" Click="FireRebind" MouseEnter="Button_MouseEnter" Tag="FireKey"/>
+            <Button Content="Mouse Control" Click="MouseControlToggle" MouseEnter="Button_MouseEnter" Tag="MouseToggleButton"/>
+            <Button Content="Reset" Click="ResetDefaults" MouseEnter="Button_MouseEnter" Tag="ResetButton"/>
+        </StackPanel>
+
+        <TextBlock Name="text_block_settings" Text="Settings - change keybinds" Foreground="White" FontWeight="Medium" FontSize="40" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="30,30,0,0"></TextBlock>
+        <Button Content="Exit" Click="SwitchToMenu" Margin="0,390,675,0"/>
+        <Label Name="prompt" Foreground="White" FontSize="16" FontWeight="DemiBold" HorizontalAlignment="Left" Canvas.Left="10" Canvas.Top="10" VerticalAlignment="Top" Margin="346,114,0,0"></Label>
+    </Grid>
+</UserControl>

@@ -1,0 +1,5 @@
+FireKey=Space
+MoveLeftKey=L
+MoveRightKey=Right
+MoveUpKey=Up
+MoveDownKey=NumPad2

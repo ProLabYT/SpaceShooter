@@ -1,0 +1,69 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net7.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="MainMenu.xaml.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="config.txt" />
+    <None Remove="images\explosion.gif" />
+    <None Remove="images\explosionframes\frame00.gif" />
+    <None Remove="images\explosionframes\frame01.gif" />
+    <None Remove="images\explosionframes\frame02.gif" />
+    <None Remove="images\explosionframes\frame03.gif" />
+    <None Remove="images\explosionframes\frame04.gif" />
+    <None Remove="images\explosionframes\frame05.gif" />
+    <None Remove="images\explosionframes\frame06.gif" />
+    <None Remove="images\explosionframes\frame07.gif" />
+    <None Remove="images\explosionframes\frame08.gif" />
+    <None Remove="images\explosionframes\frame09.gif" />
+    <None Remove="images\invader1.webp" />
+    <None Remove="images\invader2.webp" />
+    <None Remove="images\invader3.webp" />
+    <None Remove="images\invader4.webp" />
+    <None Remove="images\invader5.webp" />
+    <None Remove="images\invader6.webp" />
+    <None Remove="images\invader7.webp" />
+    <None Remove="images\invader8.webp" />
+    <None Remove="images\menubackground.jpg" />
+    <None Remove="images\menubackground.png" />
+    <None Remove="images\player.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Remove="MainMenu.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="config.txt" />
+    <Resource Include="images\explosion.gif" />
+    <Resource Include="images\explosionframes\frame00.gif" />
+    <Resource Include="images\explosionframes\frame01.gif" />
+    <Resource Include="images\explosionframes\frame02.gif" />
+    <Resource Include="images\explosionframes\frame03.gif" />
+    <Resource Include="images\explosionframes\frame04.gif" />
+    <Resource Include="images\explosionframes\frame05.gif" />
+    <Resource Include="images\explosionframes\frame06.gif" />
+    <Resource Include="images\explosionframes\frame07.gif" />
+    <Resource Include="images\explosionframes\frame08.gif" />
+    <Resource Include="images\explosionframes\frame09.gif" />
+    <Resource Include="images\invader1.webp" />
+    <Resource Include="images\invader2.webp" />
+    <Resource Include="images\invader3.webp" />
+    <Resource Include="images\invader4.webp" />
+    <Resource Include="images\invader5.webp" />
+    <Resource Include="images\invader6.webp" />
+    <Resource Include="images\invader7.webp" />
+    <Resource Include="images\invader8.webp" />
+    <Resource Include="images\menubackground.png" />
+    <Resource Include="images\player.png" />
+  </ItemGroup>
+
+</Project>
