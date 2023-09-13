@@ -35,6 +35,9 @@
     <None Remove="images\menubackground.jpg" />
     <None Remove="images\menubackground.png" />
     <None Remove="images\player.png" />
+    <None Remove="wave1.txt" />
+    <None Remove="wave2.txt" />
+    <None Remove="wave3.txt" />
   </ItemGroup>
 
   <ItemGroup>
@@ -64,6 +67,9 @@
     <Resource Include="images\invader8.webp" />
     <Resource Include="images\menubackground.png" />
     <Resource Include="images\player.png" />
+    <Resource Include="wave1.txt" />
+    <Resource Include="wave2.txt" />
+    <Resource Include="wave3.txt" />
   </ItemGroup>
 
 </Project>

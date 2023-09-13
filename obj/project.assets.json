@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "J:\\VisualStudio\\source\\repos\\SpaceShooter\\SpaceShooter.csproj",
+      "projectUniqueName": "J:\\GitHub\\repos\\SpaceShooter\\SpaceShooter\\SpaceShooter.csproj",
       "projectName": "SpaceShooter",
-      "projectPath": "J:\\VisualStudio\\source\\repos\\SpaceShooter\\SpaceShooter.csproj",
+      "projectPath": "J:\\GitHub\\repos\\SpaceShooter\\SpaceShooter\\SpaceShooter.csproj",
       "packagesPath": "C:\\Users\\ProLab\\.nuget\\packages\\",
-      "outputPath": "J:\\VisualStudio\\source\\repos\\SpaceShooter\\obj\\",
+      "outputPath": "J:\\GitHub\\repos\\SpaceShooter\\SpaceShooter\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\ProLab\\AppData\\Roaming\\NuGet\\NuGet.Config",

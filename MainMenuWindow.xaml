@@ -35,9 +35,9 @@
        
         <StackPanel VerticalAlignment="Top" HorizontalAlignment="Left" Height="305" Width="125" Margin="100,100,0,0">
             <Button Content="Start Game" Click="StartGame"/>
-            <Button Content="Select Level" Click="ShowLevelSelector"/>
+            <Button Content="Select Level" Click="ShowLevelSelector" Foreground="#2f3133"/>
             <Button Content="Settings" Click="ShowSettings"/>
-            <Button Content="Stats" Click="ShowStats"/>
+            <Button Content="Stats" Click="ShowStats" Foreground="#2f3133"/>
         </StackPanel>
 
         <TextBlock Name="text_block_title" Text="Space Shooter" Foreground="White" FontWeight="Medium" FontSize="40" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="30,30,0,0"></TextBlock>

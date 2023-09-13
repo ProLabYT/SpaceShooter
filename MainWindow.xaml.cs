@@ -16,6 +16,9 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 using System.Windows.Threading;
+using static SpaceShooter.MainWindow;
+using System.Windows.Automation;
+using System.Printing;
 
 namespace SpaceShooter
 {
@@ -23,14 +26,54 @@ namespace SpaceShooter
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     /// 
-    
+    public class Enemy
+    {
+        public static int DefaultHeight = 50;
+        public static int DefaultWidth = 50;
+        public Rectangle Rectangle { get; set; }
+        public int Health { get; set; }
+        public int PointValue { get; set; }
+        public int Speed { get; set; }
+        public Brush ProjectileColor { get; set; }
+
+        public Enemy(Rectangle rectangle, int health, int pointValue, int speed, Brush projectileColor)
+        {
+            Rectangle = rectangle;
+            Health = health;
+            PointValue = pointValue;
+            Speed = speed;
+            ProjectileColor = projectileColor;
+        }
+    }
 
     public enum EnemyType
     {
         Type1,
         Type2,
-        Type3
+        Type3,
+        None
     }
+
+    public class Wave
+    {
+        public List<EnemyConfiguration> Enemies { get; set; }
+        public int DelayMilliseconds { get; set; }
+    }
+
+    public class EnemyConfiguration
+    {
+        public EnemyType Type { get; }
+        public int X { get; }
+        public int Y { get; }
+
+        public EnemyConfiguration(EnemyType type, int x, int y)
+        {
+            Type = type;
+            X = x;
+            Y = y;
+        }
+    }
+
 
     public class GameConfiguration
     {
@@ -47,6 +90,9 @@ namespace SpaceShooter
     public partial class MainWindow : UserControl
     {
 
+        private int currentWave = 0;
+        private List<string[]> wavePatterns = new List<string[]>();
+
         bool goLeft, goRight, goUp, goDown; //player movement booleany pre ovládanie klávesnicou
 
         List<Rectangle> itemsToRemove = new List<Rectangle>();  // zoznam nepotrebných objektov na odstránenie
@@ -59,28 +105,31 @@ namespace SpaceShooter
         private const Key DefaultMoveRightKey = Key.Right;
         private const Key DefaultFireKey = Key.Space;
         private const bool DefaultMouseControl = false;
+        private const int maxWaveNumber = 3;
 
-        int enemySpawnCount = 20;
+        int waveNumber = 0;     //default parametre
         int livesCount = 3;
-        int enemyImages = 0;
-        int enemyImagesCount = 8;
-        int projectileTimerLimit = 200;             //default parametre
         int totalEnemies = 0;
         int scorePoints = 0;
-        int defaultEnemyPointValue = 100;
+        int defaultEnemyPointValue = 0;
         int extraLifeThreshold = 2000;
         int enemySpeed = 6;
-        int defaultEnemyWidth = 50;
         int defaultEnemyHeight = 50;
+        int defaultEnemyWidth = 50;
         int playerShipWidth = 80;
         int playerShipHeight = 100;
         int explosionAnimationFrames = 10;
         int explosionAnimationProgress = 0;
         int currentFrameIndex = 0;
+        int enemyDirection = 1;
+        int defaultEnemyHealth = 0;
+        int windowTopSafeZone = 50;
 
         //bool mouseControl;
         bool gameOver = false;
         bool isPaused = false;
+
+        Brush defaultProjectileColor = Brushes.Red;
 
         List<Enemy> enemyList = new List<Enemy>();      //listy na game objecty
         List<ImageSource> explosionFrames = new List<ImageSource>();
@@ -122,6 +171,8 @@ namespace SpaceShooter
             explosionImage.Source = explosionFrames[currentFrameIndex];
             gameTimer.Tick += GameLoop;
             gameTimer.Interval = TimeSpan.FromMilliseconds(1);
+
+            StartGame();
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)   //Keďže pracujem s UserControl-om, tak potrebujem dať focus, inakšie keybindy na klávesnici nefungujú
@@ -131,11 +182,10 @@ namespace SpaceShooter
 
         public void StartGame()
         {
+            LoadWavePatterns($"../../../wave{waveNumber}.txt");
             enemyShootingTimer.Start();
             animationTimer.Start();
             gameTimer.Start();
-            //spawnEnemies(enemySpawnCount, EnemyType.Type1);
-            spawnEnemies(enemySpawnCount, EnemyType.Type2);
         }
 
         private GameConfiguration LoadKeybindsFromFile(string path)
@@ -198,11 +248,11 @@ namespace SpaceShooter
 
         private void GameLoop(object? sender, EventArgs e)
         {
-            Rect playerHitBox = new Rect(Canvas.GetLeft(player),Canvas.GetTop(player), player.Width,player.Height); //player hitbox a aktualizácia UI
-            score.Content = "Score: " + scorePoints + "     "+totalEnemies;
+            Rect playerHitBox = new Rect(Canvas.GetLeft(player),Canvas.GetTop(player), player.Width,player.Height); //player hitbox 
+            score.Content = "Score: " + scorePoints + "     "+totalEnemies ;                    // UI aktualizácia
             lives.Content = "Lives: " + livesCount;
 
-            if (goLeft == true && Canvas.GetLeft(player) > 0)       //keyboard input
+            if (goLeft == true && Canvas.GetLeft(player) > 0)       //keyboard input movement
             {
                 Canvas.SetLeft(player, Canvas.GetLeft(player) - 5);
             }
@@ -222,7 +272,7 @@ namespace SpaceShooter
                 Canvas.SetTop(player, Canvas.GetTop(player) + 2);
             }
 
-            if (gameConfiguration.MouseControl)
+            if (gameConfiguration.MouseControl)         //mouse input
             {
                 Point mousePosition = Mouse.GetPosition(myCanvas);
                 double newX = mousePosition.X - playerShipWidth / 2;
@@ -235,26 +285,26 @@ namespace SpaceShooter
                 Canvas.SetTop(player, newY);
             }
 
-            foreach (var item in myCanvas.Children.OfType<Rectangle>())
+            foreach (var item in myCanvas.Children.OfType<Rectangle>())     // v loope prechadza cez vsetky itemy s roznymi tagmi a riesi kolizie a podobne
             {
                 if ((string)item.Tag == "projectile")
                 {
-                    Canvas.SetTop(item, Canvas.GetTop(item) - 20);
+                    Canvas.SetTop(item, Canvas.GetTop(item) - 20);          //animacia projektilov
 
                     if (Canvas.GetTop(item) < 10)
                     {
                         itemsToRemove.Add(item);
                     }
 
-                    Rect projectileHitBox = new Rect(Canvas.GetLeft(item), Canvas.GetTop(item), item.Width, item.Height);
+                    Rect projectileHitBox = new Rect(Canvas.GetLeft(item), Canvas.GetTop(item), item.Width, item.Height);  // projectile hitbox
 
-                    foreach (var enemy in enemyList)
+                    foreach (var enemy in enemyList)                                //for loop prechadza vsetky Enemy objekty
                     {
                         if (enemy != null && myCanvas.Children.Contains(enemy.Rectangle))
                         {
-                            Rect enemyHitBox = new Rect(Canvas.GetLeft(enemy.Rectangle), Canvas.GetTop(enemy.Rectangle), enemy.Rectangle.Width, enemy.Rectangle.Height);
+                            Rect enemyHitBox = new Rect(Canvas.GetLeft(enemy.Rectangle), Canvas.GetTop(enemy.Rectangle), enemy.Rectangle.Width, enemy.Rectangle.Height); //enemy Hitboxy
 
-                            if (projectileHitBox.IntersectsWith(enemyHitBox))
+                            if (projectileHitBox.IntersectsWith(enemyHitBox))       //collision a health logika
                             {
                                 itemsToRemove.Add(item);
                                 enemy.Health -= 1;
@@ -277,31 +327,29 @@ namespace SpaceShooter
 
                 if ((string)item.Tag == "enemy")
                 {
-                    Canvas.SetLeft(item, Canvas.GetLeft(item) + enemySpeed);
+                    double currentLeft = Canvas.GetLeft(item);
+                    double newLeft = currentLeft + enemySpeed * enemyDirection;
 
-                    if (Canvas.GetLeft(item) > Application.Current.MainWindow.Width)
+                    if (newLeft < 0 || newLeft + item.Width > Application.Current.MainWindow.Width)
                     {
-                        Canvas.SetLeft(item, -80);
-                        Canvas.SetTop(item, Canvas.GetTop(item) + (item.Height + 10));
+                        enemyDirection *= -1;                   //zmena smeru ked sa enemy dostane na kraj okna. 1 je left to right, -1 je right to left
+                        newLeft += enemySpeed * enemyDirection; // pohyb naspat 
                     }
+
+                    Canvas.SetLeft(item, newLeft);
 
                     Rect enemyHitBox = new Rect(Canvas.GetLeft(item), Canvas.GetTop(item), item.Width, item.Height);
 
-                    if (playerHitBox.IntersectsWith(enemyHitBox))
+                    if (playerHitBox.IntersectsWith(enemyHitBox))       //kolizna logika pre to ked sa zrazi hrac s enemy
                     {
                         if (livesCount <= 0)
                         {
-                            player.Visibility = Visibility.Collapsed;
-                            for (int i = 0; i < 3; i++)
-                            {
-                                explode();
-                            }
-                            showGameOver("You died");
+                            playerDeath();
                         }
                         else
-                        {
-                            livesCount -= 1;
-                            itemsToRemove.Add(item);
+                        {   
+                            livesCount -= 1;                
+                            itemsToRemove.Add(item);        //inaksie sa hracovi zivot uberie a enemy odstranime
                         }
                         totalEnemies -= 1;
                         explode();
@@ -314,21 +362,16 @@ namespace SpaceShooter
                     Canvas.SetTop(item, Canvas.GetTop(item) + 10);
                     if (Canvas.GetTop(item) > Application.Current.MainWindow.Height)
                     {
-                        itemsToRemove.Add(item);
+                        itemsToRemove.Add(item);            //odstranenie projektilu ktory uz nie je viditelny
                     }
 
-                    Rect enemyProjectileHitBox = new Rect(Canvas.GetLeft(item), Canvas.GetTop(item), item.Width, item.Height);
+                    Rect enemyProjectileHitBox = new Rect(Canvas.GetLeft(item), Canvas.GetTop(item), item.Width, item.Height); // hitbox na enemy projektil
 
-                    if (playerHitBox.IntersectsWith(enemyProjectileHitBox))
+                    if (playerHitBox.IntersectsWith(enemyProjectileHitBox))  // kolizna logika pre koliziu hraca s enemy projektilom
                     {
                         if (livesCount <= 0)
                         {
-                            player.Visibility = Visibility.Collapsed;
-                            for (int i = 0; i < 3; i++)
-                            {
-                                explode();
-                            }
-                            showGameOver("You died");
+                            playerDeath();
                         }
                         else
                         {
@@ -342,33 +385,42 @@ namespace SpaceShooter
             }
 
 
-            foreach (Rectangle item in itemsToRemove) 
-             { 
-                 myCanvas.Children.Remove(item);
-             }
+            foreach (Rectangle item in itemsToRemove) //odstranovanie nepotrebnych objektov
+            {
+                myCanvas.Children.Remove(item);
+            }
              
-             if (totalEnemies<1)
-             {
-                showGameOver("Victory");
-             }
+            if (totalEnemies<1 && waveNumber >=maxWaveNumber) // win condition
+            {
+               showGameOver("Victory");
+            }
+            else if (totalEnemies < 1) //a inaksie wave logika
+            {
+               gameTimer.Stop();
+               wavePatterns.Clear();
+               waveNumber+=1;
+               LoadWavePatterns($"../../../wave{waveNumber}.txt");
+               gameTimer.Start();
+               StartNextWave();
+            }
         }
 
         private void EnemyShootingTimer_Tick(object sender, EventArgs e)
         {
             if (enemyList.Count > 0)
             {
-                List<Enemy> aliveEnemies = enemyList.Where(enemy => myCanvas.Children.Contains(enemy.Rectangle)).ToList();
+                List<Enemy> aliveEnemies = enemyList.Where(enemy => myCanvas.Children.Contains(enemy.Rectangle)).ToList(); //kazdym Tickom timeru sa aktualizuje zoznam zijucich nepriatelov (a teda vhodnych kandidatov na to aby vystrelili)
 
                 if (aliveEnemies.Count > 0 && !isPaused && !gameOver)
                 {
                     int randomEnemyIndex = random.Next(aliveEnemies.Count); //vyberie nahodneho nepriatela zo zoznamu zijucich nepriatelov a ten vystrelí
                     Enemy randomEnemy = aliveEnemies[randomEnemyIndex];
-                    enemyProjectileSpawner(Canvas.GetLeft(randomEnemy.Rectangle) + randomEnemy.Rectangle.Width / 2, Canvas.GetTop(randomEnemy.Rectangle) + randomEnemy.Rectangle.Height);
+                    enemyProjectileSpawner(Canvas.GetLeft(randomEnemy.Rectangle) + randomEnemy.Rectangle.Width / 2, Canvas.GetTop(randomEnemy.Rectangle) + randomEnemy.Rectangle.Height, randomEnemy.ProjectileColor);
                 }
             }
         }
 
-        private void KeyIsDown(object sender, KeyEventArgs e)
+        private void KeyIsDown(object sender, KeyEventArgs e) //keyboard bindy 
         {
             if (e.Key == gameConfiguration.MoveLeftKey) 
             { 
@@ -471,7 +523,7 @@ namespace SpaceShooter
                 }
                 explosionAnimationProgress++;
             }
-            else
+            else // ak sa animacia uspesne prehra, tak snimky sa poodstranuju aby nezostali na obrazovke
             {
                 var explosionRectangles = myCanvas.Children.OfType<Rectangle>().Where(item => (string)item.Tag == "playerExplosion").ToList();
                 foreach (var item in explosionRectangles)
@@ -502,20 +554,7 @@ namespace SpaceShooter
             explosionAnimationProgress = 0;
         }
 
-        public class Enemy
-        {
-            public Rectangle Rectangle { get; set; }
-            public int Health { get; set; }
-            public int PointValue { get; set; }
-            public Enemy(Rectangle rectangle, int health, int pointvalue) 
-            {
-                Rectangle = rectangle;
-                Health = health;
-                PointValue = pointvalue;
-            }
-        }
-
-        private void enemyProjectileSpawner(double x, double y)
+        private void enemyProjectileSpawner(double x, double y, Brush projectileColor)
         {
             Rectangle enemyProjectile = new Rectangle
             {
@@ -523,7 +562,7 @@ namespace SpaceShooter
                 Height = 40,
                 Width = 10,
                 Fill = Brushes.Black,
-                Stroke = Brushes.Red,
+                Stroke = projectileColor,
                 StrokeThickness = 2,
             };
 
@@ -533,14 +572,12 @@ namespace SpaceShooter
             myCanvas.Children.Add(enemyProjectile);
         }
 
-        private void spawnEnemies(int limit, EnemyType enemyType)
+        private void spawnEnemy(EnemyType enemyType,int x, int y)
         {
-            int left = 0;
-            totalEnemies = limit;
+            totalEnemies +=1;
 
-            for (int i = 0; i < limit; i++) 
-            { 
                 ImageBrush enemySkin = new ImageBrush();
+                Brush projectileColor = defaultProjectileColor;
 
                 Rectangle newEnemy = new Rectangle
                 {
@@ -550,52 +587,117 @@ namespace SpaceShooter
                     Fill = enemySkin
                 };
 
-                int enemyHealth = 0;
-                int enemyPointValue = 0;
+                int enemyHealth=defaultEnemyHealth;
+                int enemyPointValue = defaultEnemyPointValue;
                 switch (enemyType)
                 {
                     case EnemyType.Type1:
                         enemyHealth = 2;
                         enemyPointValue = 100;
                         enemySkin.ImageSource = new BitmapImage(new Uri("pack://application:,,,/images/invader1.webp"));
+                        projectileColor = Brushes.Red;
                         break;
 
                     case EnemyType.Type2:
                         enemyHealth = 3;
                         enemyPointValue = 300;
                         enemySkin.ImageSource = new BitmapImage(new Uri("pack://application:,,,/images/invader2.webp"));
+                        projectileColor = Brushes.Green;
                         break;
 
                     case EnemyType.Type3:
                         enemyHealth = 4;
                         enemyPointValue = 400;
                         enemySkin.ImageSource = new BitmapImage(new Uri("pack://application:,,,/images/invader3.webp"));
+                        projectileColor = Brushes.Purple;
                         break;
                 }
 
-                Enemy enemy = new Enemy(newEnemy, enemyHealth, enemyPointValue);
+                Enemy enemy = new Enemy(newEnemy, enemyHealth, enemyPointValue, 10, projectileColor);
 
-                Canvas.SetTop(enemy.Rectangle, 30);
-                Canvas.SetLeft(enemy.Rectangle, left);
+                Canvas.SetTop(enemy.Rectangle, x);
+                Canvas.SetLeft(enemy.Rectangle, y);
+
                 myCanvas.Children.Add(enemy.Rectangle);
-                left -= 60;
-
                 enemyList.Add(enemy);
+        }
 
-                enemyImages++;
 
+        private void SpawnEnemiesFromWavePattern(string[] wavePattern) //umiestnuje nepriatelov do mriezky podla textoveho suboru
+        {
+            for (int row = 0; row < wavePattern.Length; row++)
+            {
+                string rowConfig = wavePattern[row];
+                for (int col = 0; col < rowConfig.Length; col++)
+                {
+                    char enemyChar = rowConfig[col];
+                    if (enemyChar != ' ')
+                    {
+                        int x = row * defaultEnemyWidth + windowTopSafeZone; 
+                        int y = col * defaultEnemyHeight; 
+
+                        spawnEnemy(ParseEnemyType(enemyChar), x, y);
+                    }
+                }
             }
+        }
+
+        private void StartNextWave()
+        {
+            string[] wavePattern = wavePatterns[currentWave];
+            SpawnEnemiesFromWavePattern(wavePattern);
+
+        }
+
+        private void LoadWavePatterns(string fileName)  //loaduje  obsah textoveho suboru do wavePattern
+        {
+            try
+            {
+                string[] lines = File.ReadAllLines(fileName);
+                wavePatterns.Add(lines);
+            }
+            catch (FileNotFoundException)
+            {
+               //score.Content = "Not Found:" +fileName; //debugging statement
+            }
+        }
+
+        private EnemyType ParseEnemyType(char enemyChar) // parser enemyTypov
+        {
+            switch (enemyChar)
+            {
+                case '1':
+                    return EnemyType.Type1;
+                case '2':
+                    return EnemyType.Type2;
+                case '3':
+                    return EnemyType.Type3;
+                default:
+                    return EnemyType.None; 
+            }
+        }
+
+        private void playerDeath()
+        {
+            player.Visibility = Visibility.Collapsed;  // hrac zmizne s 3 vybuchmi a hra sa konci
+            for (int i = 0; i < 3; i++)
+            {
+                explode();
+            }
+            showGameOver("You died");
         }
 
         private void showGameOver(string msg)
         {
             gameOver = true;
+            wavePatterns.Clear();
             gameTimer.Stop();
             score.Content += " " + msg + "!   Enter to play again";
         }
 
         private void SwitchToMainMenu() // funguje, ale potom tlacitka nefunguju
         {
+            wavePatterns.Clear();
             gameTimer.Stop();
             gameOver = true;
             this.Content = mainMenu;
@@ -626,6 +728,8 @@ namespace SpaceShooter
             myCanvas.Focus();  
             isPaused = false; // toto prerobit a miesto globalnych premennych pouzivat konstanty a funkcie ktore si budu predavat parametre
             gameOver = false;
+            waveNumber = 0;
+            wavePatterns.Clear();
             totalEnemies = 0;
             scorePoints = 0;
             livesCount = 3;
@@ -640,9 +744,7 @@ namespace SpaceShooter
                     myCanvas.Children.Remove(item);
                 }
             }
-
             StartGame();
         }
-
     }
 }
