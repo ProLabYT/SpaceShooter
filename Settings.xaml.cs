@@ -8,17 +8,10 @@ namespace SpaceShooter
 {
     public partial class Settings : UserControl
     {
-        public GameConfiguration gameConfiguration;
-        private ControlToRebind currentControlToRebind;
+        public GameConfiguration gameConfiguration; //konfigurácia keybindov, ktoré sa dajú meniť
+        private ControlToRebind currentControlToRebind; //keybind, ktorý sa aktuálne mení
 
-        private const Key DefaultMoveUpKey = Key.Up;
-        private const Key DefaultMoveDownKey = Key.Down;
-        private const Key DefaultMoveLeftKey = Key.Left;
-        private const Key DefaultMoveRightKey = Key.Right;
-        private const Key DefaultFireKey = Key.Space;
-        private const bool DefaultMouseControl = false;
-
-        private enum ControlToRebind
+        private enum ControlToRebind    //enum všetkých možných keybindov, ktoré sa dajú meniť
         {
             None,
             MoveUpKey,
@@ -33,20 +26,20 @@ namespace SpaceShooter
         {
             InitializeComponent();
             gameConfiguration = gameConfig;
-            KeyDown += UserControl_KeyDown;
+            KeyDown += UserControl_KeyDown; //priradenie key event handleru na rebindovanie keybindov
         }
 
-        private void Rebind(ControlToRebind control)
+        private void Rebind(ControlToRebind control)        //nastaví currentControlToRebind, podľa toho, ktoré tlačítko bolo stlačené a zobrazí v prompte
         {
             currentControlToRebind = control;
-                prompt.Content = $"Press a key to rebind the {control} command";
+            prompt.Content = $"Press a key to rebind the {control} command";
         }
 
-        private void UserControl_KeyDown(object sender, KeyEventArgs e)
+        private void UserControl_KeyDown(object sender, KeyEventArgs e) //samotný event handler na rebindovanie
         {
             if (currentControlToRebind != ControlToRebind.None)
             {
-                switch (currentControlToRebind)
+                switch (currentControlToRebind)         //aktualizácia keybindu v gameConfiguration
                 {
                     case ControlToRebind.MoveUpKey:
                         gameConfiguration.MoveUpKey = e.Key;
@@ -64,14 +57,14 @@ namespace SpaceShooter
                         gameConfiguration.FireKey = e.Key;
                         break;
                 }
-                currentControlToRebind = ControlToRebind.None;
-                prompt.Content = string.Empty;
-                updateConfigFile();
+                currentControlToRebind = ControlToRebind.None; //resetovanie na ďalšie použitie
+                prompt.Content = string.Empty;                 //vyčistenie promptu
+                updateConfigFile();                            //prepísanie konfiguračného súboru so zmenami
             }
         }
 
-        private void updateConfigFile() 
-        {
+        private void updateConfigFile() //funkcia na prepísanie konfiguračného súboru (aj so správnym formátovaním)
+        {       
             string configText =
             $"MoveUpKey={gameConfiguration.MoveUpKey}\n" +
             $"MoveDownKey={gameConfiguration.MoveDownKey}\n" +
@@ -80,18 +73,18 @@ namespace SpaceShooter
             $"FireKey={gameConfiguration.FireKey}\n" +
             $"MouseControl={gameConfiguration.MouseControl}\n";
 
-            File.WriteAllText("../../../config.txt", configText);
+            File.WriteAllText("../../../config.txt", configText); //zapísanie do súboru
         }
 
-        private void Button_MouseEnter(object sender, MouseEventArgs e)
+        private void Button_MouseEnter(object sender, MouseEventArgs e) //event handler pre to, keď hráč kurzorom vojde do tlačítka (použité v Settings.xaml)
         {
             if (gameConfiguration == null)
                 return;
 
-            Button button = sender as Button;
+            Button button = sender as Button; //castuje sender object do Button-u
             if (button != null)
             {
-                string keyName = button.Tag.ToString();
+                string keyName = button.Tag.ToString(); //každý button má nejaký Tag, podľa neho sa vyberie case, čo treba zobraziť v prompte on hover.
                 switch (keyName)
                 {
                     case "MoveUpKey":
@@ -119,7 +112,7 @@ namespace SpaceShooter
             }
         }
 
-        private void UpRebind(object sender, RoutedEventArgs e)
+        private void UpRebind(object sender, RoutedEventArgs e) //event handlery pre rebindovanie konkrétnych ovládacích prvkov
         {
             Rebind(ControlToRebind.MoveUpKey);
         }
@@ -144,31 +137,31 @@ namespace SpaceShooter
             Rebind(ControlToRebind.FireKey);
         }
 
-        private void MouseControlToggle(object sender, RoutedEventArgs e)
+        private void MouseControlToggle(object sender, RoutedEventArgs e) //toggle pre mouse control 
         {
-            gameConfiguration.MouseControl = !gameConfiguration.MouseControl;
+            gameConfiguration.MouseControl = !gameConfiguration.MouseControl;   //bool negácia 
             updateConfigFile();
             prompt.Content = $"Mouse Control: {gameConfiguration.MouseControl}";
         }
 
-        private void ResetDefaults(object sender, RoutedEventArgs e)
+        private void ResetDefaults(object sender, RoutedEventArgs e)    //nahradenie všetkých bindov ich defaultnými hodnotami
         {
-            gameConfiguration.MoveUpKey = DefaultMoveUpKey;
-            gameConfiguration.MoveDownKey = DefaultMoveDownKey;
-            gameConfiguration.MoveLeftKey = DefaultMoveLeftKey;
-            gameConfiguration.MoveRightKey = DefaultMoveRightKey;
-            gameConfiguration.FireKey = DefaultFireKey;
-            gameConfiguration.MouseControl = DefaultMouseControl;
+            gameConfiguration.MoveUpKey = MainWindow.DefaultMoveUpKey;
+            gameConfiguration.MoveDownKey = MainWindow.DefaultMoveDownKey;
+            gameConfiguration.MoveLeftKey = MainWindow.DefaultMoveLeftKey;
+            gameConfiguration.MoveRightKey = MainWindow.DefaultMoveRightKey;
+            gameConfiguration.FireKey = MainWindow.DefaultFireKey;
+            gameConfiguration.MouseControl = MainWindow.DefaultMouseControl;
 
             updateConfigFile();
 
             prompt.Content = "Defaults Reset.";
         }
 
-        private void SwitchToMenu(object sender, RoutedEventArgs e)
+        private void SwitchToMenu(object sender, RoutedEventArgs e) //funkcia na vrátenie sa naspäť do menu
         {
             var mainMenuWindow = new MainMenuWindow();
-            this.Content = mainMenuWindow;
+            this.Content = mainMenuWindow;                      //swich contentu na mainMenuWindow
         }
     }
 }

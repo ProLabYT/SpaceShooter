@@ -38,6 +38,7 @@
             <Button Content="Select Level" Click="ShowLevelSelector" Foreground="#2f3133"/>
             <Button Content="Settings" Click="ShowSettings"/>
             <Button Content="Stats" Click="ShowStats" Foreground="#2f3133"/>
+            <Button Content="Quit" Click="QuitGame" />
         </StackPanel>
 
         <TextBlock Name="text_block_title" Text="Space Shooter" Foreground="White" FontWeight="Medium" FontSize="40" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="30,30,0,0"></TextBlock>

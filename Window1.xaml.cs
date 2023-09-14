@@ -15,7 +15,7 @@ using System.Windows.Shapes;
 namespace SpaceShooter
 {
     /// <summary>
-    /// Interaction logic for Window1.xaml
+    /// Len window, ktorý sa vytvorí pri spustení programu a jeho obsah je vyplnený hlavným menu (MainMenuWindow)
     /// </summary>
     public partial class Window1 : Window
     {

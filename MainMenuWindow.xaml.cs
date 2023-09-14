@@ -8,53 +8,45 @@ namespace SpaceShooter
 {
     public partial class MainMenuWindow : UserControl
     {
+        private const string configFilePath = "../../../config.txt";
         private GameConfiguration gameConfiguration;
-        public event EventHandler StartGameClicked;
-        public event EventHandler SettingsClicked;
-        public event EventHandler StatsClicked;
-        public event EventHandler LevelSelectorClicked;
-
+        private Settings settingsControl;
         public MainMenuWindow()
         {
             InitializeComponent();
             Version version = Assembly.GetExecutingAssembly().GetName().Version;
             text_block_version.Text = string.Format("  Version {0}.{1}.{2}", version.Major, version.Minor, version.Build);
 
-            gameConfiguration = new GameConfiguration
-            {
-                FireKey = Key.Space,
-                MoveLeftKey = Key.Left,
-                MoveRightKey = Key.Right,
-                MoveUpKey = Key.Up,
-                MoveDownKey = Key.Down
-            };
-
-
+            gameConfiguration = MainWindow.LoadKeybindsFromFile(configFilePath);
+            settingsControl = new Settings(gameConfiguration); //vytvorenie settings UserControlu, medzi ktorým budem len prepínať 
         }
 
-        private void StartGame(object sender, RoutedEventArgs e)
+        //nasledujúce funkcie sú nabindované na tlačítka definované v MainMenuWindow.xaml súbore
+        private void StartGame(object sender, RoutedEventArgs e) //tlačítko na začatie hry
         {
-            var mainWindow = new MainWindow();
+            var mainWindow = new MainWindow(); 
             this.Content = mainWindow;
             mainWindow.StartGame();
         }
 
         private void ShowLevelSelector(object sender, RoutedEventArgs e)
         {
-            LevelSelectorClicked?.Invoke(this, EventArgs.Empty);
+            //nedokončený level selector
         }
 
-        private void ShowSettings(object sender, RoutedEventArgs e)
+        private void ShowSettings(object sender, RoutedEventArgs e) //tlačítko na otvorenie nastavení
         {
-            var settings = new Settings(gameConfiguration);
-            this.Content = settings;
+            this.Content = settingsControl;
         }
 
         private void ShowStats(object sender, RoutedEventArgs e)
         {
-            StatsClicked?.Invoke(this, EventArgs.Empty);
+            //nedokončené stats
         }
 
-        
+        private void QuitGame(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }    
     }
 }
