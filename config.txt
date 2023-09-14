@@ -1,6 +1,6 @@
-MoveUpKey=Up
-MoveDownKey=Down
-MoveLeftKey=Left
-MoveRightKey=Right
+MoveUpKey=W
+MoveDownKey=S
+MoveLeftKey=A
+MoveRightKey=D
 FireKey=Space
 MouseControl=False

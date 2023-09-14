@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -64,7 +63,7 @@ namespace SpaceShooter
         }
 
         private void updateConfigFile() //funkcia na prepísanie konfiguračného súboru (aj so správnym formátovaním)
-        {       
+        {
             string configText =
             $"MoveUpKey={gameConfiguration.MoveUpKey}\n" +
             $"MoveDownKey={gameConfiguration.MoveDownKey}\n" +
@@ -106,7 +105,7 @@ namespace SpaceShooter
                         prompt.Content = $"Mouse Control: {gameConfiguration.MouseControl}";
                         break;
                     case "ResetButton":
-                        prompt.Content= $"Reset Defaults";
+                        prompt.Content = $"Reset Defaults";
                         break;
                 }
             }

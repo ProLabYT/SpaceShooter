@@ -1,32 +1,18 @@
 ﻿using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
-
 using System.Windows.Threading;
-using static SpaceShooter.MainWindow;
-using System.Windows.Automation;
-using System.Printing;
 
 namespace SpaceShooter
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-    /// 
-    public class Enemy      
+    public class Enemy
     {
         //trieda reprezentujúca nepriateľov (život, hodnotu v bodoch a farbu projektilov)
         public static int DefaultHeight = 50;
@@ -37,7 +23,7 @@ namespace SpaceShooter
         public int Speed { get; set; }
         public Brush ProjectileColor { get; set; }
 
-        public Enemy(Rectangle rectangle, int health, int pointValue,  Brush projectileColor)
+        public Enemy(Rectangle rectangle, int health, int pointValue, Brush projectileColor)
         {
             Rectangle = rectangle;
             Health = health;
@@ -46,7 +32,7 @@ namespace SpaceShooter
         }
     }
 
-    public enum EnemyType  
+    public enum EnemyType
     {
         //enemyTypy - podľa nich sa priraďuje HP, pointvalue a projectilecolor.
         Type1,
@@ -55,7 +41,7 @@ namespace SpaceShooter
         None
     }
 
-    public class GameConfiguration 
+    public class GameConfiguration
     {
         //trieda, ktorá udržiava keybindy 
         public Key MoveUpKey { get; set; }
@@ -73,18 +59,18 @@ namespace SpaceShooter
         //player movement booleany pre ovládanie klávesnicou
         bool goLeft, goRight, goUp, goDown;
         // zoznam nepotrebných objektov na odstránenie
-        List<Rectangle> itemsToRemove = new List<Rectangle>();  
+        List<Rectangle> itemsToRemove = new List<Rectangle>();
 
         private GameConfiguration gameConfiguration;
         //default parametre, sú nastavené ako public aby súbory ako Settings.xaml ich mohli čítať
-        public const Key DefaultMoveUpKey = Key.Up;       
-        public const Key DefaultMoveDownKey = Key.Down;   
-        public const Key DefaultMoveLeftKey = Key.Left;
-        public const Key DefaultMoveRightKey = Key.Right;
+        public const Key DefaultMoveUpKey = Key.W;
+        public const Key DefaultMoveDownKey = Key.S;
+        public const Key DefaultMoveLeftKey = Key.A;
+        public const Key DefaultMoveRightKey = Key.D;
         public const Key DefaultFireKey = Key.Space;
 
         public const bool DefaultMouseControl = false;
-        
+
         private const int maxWaveNumber = 3;
         private const int playerShipWidth = 80;
         private const int playerShipHeight = 100;
@@ -105,18 +91,19 @@ namespace SpaceShooter
 
         //hodnoty, ktoré sa v priebehu hry menia
         private int currentWave = 0;
-        private int waveNumber = 0;     
+        private int waveNumber = 0;
         private int livesCount = defaultLivesCount;
         private int totalEnemies = 0;
         private int scorePoints = 0;
         private int explosionAnimationProgress = 0;
         private int currentFrameIndex = 0;
         private int enemyDirection = 1;
-        
+
         private bool gameOver = false;
         private bool isPaused = false;
 
-        Brush defaultProjectileColor = Brushes.Red;                 
+        private Rect playerHitBox;
+        Brush defaultProjectileColor = Brushes.Red;
         Brush defaultPlayerProjectileColor = Brushes.Blue;
 
         //listy na game objekty (nepriateľov a snímky animácie výbuchu)
@@ -124,12 +111,12 @@ namespace SpaceShooter
         List<ImageSource> explosionFrames = new List<ImageSource>();
 
         //Timery
-        DispatcherTimer enemyShootingTimer = new DispatcherTimer();     
+        DispatcherTimer enemyShootingTimer = new DispatcherTimer();
         DispatcherTimer animationTimer = new DispatcherTimer();
         DispatcherTimer gameTimer = new DispatcherTimer();
 
         //RNG, slúži na generovanie indexu, ktorý zo žijúcich nepriateľov vystrelí
-        Random random = new Random();  
+        Random random = new Random();
 
         ImageBrush playerShip = new ImageBrush();
 
@@ -144,23 +131,23 @@ namespace SpaceShooter
             Loaded += UserControl_Loaded;
 
             //eventhandlery pre pausemenu a jeho tlačítka
-            pauseMenu.ResumeClicked += (sender, e) => ResumeGame();     
-            pauseMenu.RestartClicked += (sender, e) => ResetGame();         
+            pauseMenu.ResumeClicked += (sender, e) => ResumeGame();
+            pauseMenu.RestartClicked += (sender, e) => ResetGame();
             pauseMenu.ExitClicked += (sender, e) => SwitchToMainMenu();
 
             //načítanie keybindov zo súboru
             gameConfiguration = LoadKeybindsFromFile("../../../config.txt");
 
             //načitanie obrázku pre hráča
-            playerShip.ImageSource = new BitmapImage(new Uri("pack://application:,,,/images/player.png"));  
-            player.Fill = playerShip;                                           
+            playerShip.ImageSource = new BitmapImage(new Uri("pack://application:,,,/images/player.png"));
+            player.Fill = playerShip;
 
-            loadExplosionFrames();     
+            loadExplosionFrames();
             setupTimers();
             StartGame();
         }
 
-        private void UserControl_Loaded(object sender, RoutedEventArgs e)   
+        private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
             //Keďže pracujem s UserControl-om, tak potrebujem dať focus, inakšie keybindy na klávesnici nefungujú
             myCanvas.Focus();
@@ -173,18 +160,18 @@ namespace SpaceShooter
             //ktorý rieši kolíznu logiku, skóre, životy, damage,
             //vstup cez myš/klávesnicu, víťazné podmienky, atď.
 
-            enemyShootingTimer.Tick += EnemyShootingTimer_Tick;                     
-            enemyShootingTimer.Interval = TimeSpan.FromMilliseconds(500);           
-            animationTimer.Tick += AnimationTick;                                   
-            animationTimer.Interval = TimeSpan.FromMilliseconds(50);               
+            enemyShootingTimer.Tick += EnemyShootingTimer_Tick;
+            enemyShootingTimer.Interval = TimeSpan.FromMilliseconds(500);
+            animationTimer.Tick += AnimationTick;
+            animationTimer.Interval = TimeSpan.FromMilliseconds(50);
             gameTimer.Tick += GameLoop;
             gameTimer.Interval = TimeSpan.FromMilliseconds(5);
         }
 
-        private void loadExplosionFrames() 
+        private void loadExplosionFrames()
         {
             //do listu načíta frames explosion animácie
-            for (int i = 0; i < explosionAnimationFrames; i++)                     
+            for (int i = 0; i < explosionAnimationFrames; i++)
             {
                 string framePath = $"pack://application:,,,/images/explosionframes/frame0{i}.gif";
                 explosionFrames.Add(new BitmapImage(new Uri(framePath)));
@@ -193,16 +180,16 @@ namespace SpaceShooter
             explosionImage.Source = explosionFrames[currentFrameIndex];
         }
 
-        public void StartGame()                                                 
+        public void StartGame()
         {
             //štart hry, tým, že sa najprv načíta 
             //nový wavepattern a potom sa spustia timery 
-            LoadWavePatterns($"../../../wave{waveNumber}.txt");                 
+            LoadWavePatterns($"../../../wave{waveNumber}.txt");
             enemyShootingTimer.Start();
             gameTimer.Start();
         }
 
-        public static GameConfiguration LoadKeybindsFromFile(string path)      
+        public static GameConfiguration LoadKeybindsFromFile(string path)
         {
             //funkcia ktorá parsuje textový súbor (config.txt)
             //a ukladá ho do Gameconfiugration
@@ -218,18 +205,18 @@ namespace SpaceShooter
                 string[] lines = File.ReadAllLines(path);
                 foreach (var line in lines)
                 {
-                    var parts = line.Split('=');                                
-                    if (parts.Length == 2)                                      
-                    {                                                          
-                        var controlName = parts[0].Trim();                     
+                    var parts = line.Split('=');
+                    if (parts.Length == 2)
+                    {
+                        var controlName = parts[0].Trim();
                         var keyName = parts[1].Trim();
 
-                        if (Enum.TryParse(keyName, out Key key))                
-                        {                                                      
-                            switch (controlName)                                
+                        if (Enum.TryParse(keyName, out Key key))
+                        {
+                            switch (controlName)
                             {
                                 //pre každú kolónku zo súboru existuje case
-                                case "FireKey":                                 
+                                case "FireKey":
                                     gameConfiguration.FireKey = key;
                                     break;
                                 case "MoveLeftKey":
@@ -246,19 +233,19 @@ namespace SpaceShooter
                                     break;
                             }
                         }
-                        else if (controlName=="MouseControl")               
+                        else if (controlName == "MouseControl")
                         {
                             //alebo podľa mouseControl sa nastaví boolean
                             if (bool.TryParse(keyName, out bool result))
                             {
                                 gameConfiguration.MouseControl = result;
-                            } 
+                            }
                         }
                     }
                 }
             }
-            
-            catch (Exception)                                               
+
+            catch (Exception)
             {
                 //v prípade akejkoľvek výnimky sa nastavia všetky bindy
                 //na ich defaultné hodnoty
@@ -272,16 +259,58 @@ namespace SpaceShooter
             return gameConfiguration;
         }
 
-        private void GameLoop(object? sender, EventArgs e)  
+        private void GameLoop(object? sender, EventArgs e)
         {
             //každým tickom gametimeru sa vykoná
-            Rect playerHitBox = new Rect(Canvas.GetLeft(player),Canvas.GetTop(player), player.Width,player.Height); //player hitbox 
+            //Rect playerHitBox = new Rect(Canvas.GetLeft(player),Canvas.GetTop(player), player.Width,player.Height); //player hitbox 
             // UI aktualizácia
-            score.Content = "Score: " + scorePoints + "     "+totalEnemies ;                    
+            score.Content = "Score: " + scorePoints /* + "     " + totalEnemies*/; //debugging statement
             lives.Content = "Lives: " + livesCount;
 
+            movePlayer();
+
+            if (gameConfiguration.MouseControl)
+            {
+                movePlayerMouse();
+            }
+
+            foreach (var item in myCanvas.Children.OfType<Rectangle>())
+            {
+                // v loope prechádza cez všetky itemy s rôznymi tagmi a rieši kolízie a podobne
+                if ((string)item.Tag == "projectile")
+                {
+                    solveCollisions(item);
+                }
+
+                if ((string)item.Tag == "enemy")
+                {
+                    //v každom Ticku GameTimeru sa každý nepriateľ vo wave posunie 
+                    //poloha je vypočítaná ako aktuálna poloha + rýchlosť * smer
+                    if (!moveEnemy(item))
+                    {
+                        break;
+                    }
+
+                }
+
+                if ((string)item.Tag == "enemyProjectile")
+                {
+                    //posúvanie projektilu 
+                    if (!moveProjectile(item))
+                    {
+                        break;
+                    }
+                }
+            }
+
+            removeUnusedItems();
+            checkGameOver();
+        }
+
+        private void movePlayer()
+        {
             //handling pohybu hráča podľa bool hodnôt z funkcií KeyIsDown a KeyIsUp
-            if (goLeft == true && Canvas.GetLeft(player) > 0)       
+            if (goLeft == true && Canvas.GetLeft(player) > 0)
             {
                 Canvas.SetLeft(player, Canvas.GetLeft(player) - playerHorizontalSpeed);
             }
@@ -301,174 +330,185 @@ namespace SpaceShooter
             {
                 Canvas.SetTop(player, Canvas.GetTop(player) + playerVerticalSpeed);
             }
+        }
 
-            if (gameConfiguration.MouseControl)        
+        private void movePlayerMouse()
+        {
+            //separátny handling pre mouse input:
+            //získanie pozície mouse pointeru 
+            Point mousePosition = Mouse.GetPosition(myCanvas);
+            //kontrola, či mouse pointer je ešte stále v okne
+            if (mousePosition.X >= 0 && mousePosition.X <= myCanvas.ActualWidth && mousePosition.Y >= 0 && mousePosition.Y <= myCanvas.ActualHeight)
             {
-                //separátny handling pre mouse input:
-                //získanie pozície mouse pointeru 
-                Point mousePosition = Mouse.GetPosition(myCanvas);      
-                //kontrola, či mouse pointer je ešte stále v okne
-                if (mousePosition.X >= 0 && mousePosition.X <= myCanvas.ActualWidth && mousePosition.Y >= 0 && mousePosition.Y <= myCanvas.ActualHeight)    
-                {
-                    // nové súradnice X a Y, kde umiestní hráča
-                    double newX = mousePosition.X - playerShipWidth / 2;    
-                    double newY = mousePosition.Y - playerShipHeight / 2;
+                // nové súradnice X a Y, kde umiestní hráča
+                double newX = mousePosition.X - playerShipWidth / 2;
+                double newY = mousePosition.Y - playerShipHeight / 2;
 
-                    //počítaním novej polohy sa zabráni tomu, aby hráč vyšiel z okna
-                    newX = Math.Max(0, Math.Min(Application.Current.MainWindow.Width - playerShipWidth, newX));
-                    newY = Math.Max(0, Math.Min(Application.Current.MainWindow.Height - playerShipHeight, newY));
+                //počítaním novej polohy sa zabráni tomu, aby hráč vyšiel z okna
+                newX = Math.Max(0, Math.Min(Application.Current.MainWindow.Width - playerShipWidth, newX));
+                newY = Math.Max(0, Math.Min(Application.Current.MainWindow.Height - playerShipHeight, newY));
 
-                    //umiestnenie hráča na novú polohu
-                    Canvas.SetLeft(player, newX);   
-                    Canvas.SetTop(player, newY);
-                }
+                //umiestnenie hráča na novú polohu
+                Canvas.SetLeft(player, newX);
+                Canvas.SetTop(player, newY);
             }
+        }
 
-            foreach (var item in myCanvas.Children.OfType<Rectangle>())     
+        private void addPointsToThePlayer(Enemy enemy)
+        {
+            //ak život klesne na nulu, nepriateľ zmizne a hráč dostane body
+            itemsToRemove.Add(enemy.Rectangle);
+            totalEnemies -= 1;
+            scorePoints += enemy.PointValue;
+
+            if (scorePoints % extraLifeThreshold == 0)
             {
-                // v loope prechádza cez všetky itemy s rôznymi tagmi a rieši kolízie a podobne
-                if ((string)item.Tag == "projectile")
-                {
-                    //animacia projektilov
-                    Canvas.SetTop(item, Canvas.GetTop(item) - playerProjectileVelocity);         
+                //v prípade, že hráč prekoná stanovenú hodnotu, získa život navyše
+                livesCount += 1;
+            }
+        }
 
-                    if (Canvas.GetTop(item) < windowTopSafeZone/defaultEnemyProjectileWidth)            
+        private void solveCollisions(Rectangle item)
+        {
+
+            //animacia projektilov
+            Canvas.SetTop(item, Canvas.GetTop(item) - playerProjectileVelocity);
+
+            removeProjectilesOutOfTheWindow(item);
+
+            //vytvorenie projectile hitboxu pomocou Rect objektu
+            //Rect namiesto Rectangle, pretože konštruktor berie
+            //parametre na rozdiel od Rectangle objektov
+            Rect projectileHitBox = new Rect(Canvas.GetLeft(item), Canvas.GetTop(item), item.Width, item.Height);
+            foreach (var enemy in enemyList)
+            {
+                //for loop prechádza všetky Enemy objekty
+                if (enemy != null && myCanvas.Children.Contains(enemy.Rectangle))
+                {
+                    //vytvorenie enemy hitboxov pomocou Rect objektov. 
+                    Rect enemyHitBox = new Rect(Canvas.GetLeft(enemy.Rectangle), Canvas.GetTop(enemy.Rectangle), enemy.Rectangle.Width, enemy.Rectangle.Height);
+
+                    //collision a health logika
+                    if (projectileHitBox.IntersectsWith(enemyHitBox))
                     {
-                        //odstránenie projektilov 
-                        //hráča ak pôjdu moc vysoko
+                        //ak sa projektil hráča zrazí s nepriateľom 
                         itemsToRemove.Add(item);
-                    }
+                        enemy.Health -= 1;
 
-                    //vytvorenie projectile hitboxu pomocou Rect objektu
-                    //Rect namiesto Rectangle, pretože konštruktor berie
-                    //parametre na rozdiel od Rectangle objektov
-                    Rect projectileHitBox = new Rect(Canvas.GetLeft(item), Canvas.GetTop(item), item.Width, item.Height);                                                        
-                    foreach (var enemy in enemyList)                          
-                    {
-                        //for loop prechádza všetky Enemy objekty
-                        if (enemy != null && myCanvas.Children.Contains(enemy.Rectangle))
+                        if (enemy.Health <= 0)
                         {
-                            //vytvorenie enemy hitboxov pomocou Rect objektov. 
-                            Rect enemyHitBox = new Rect(Canvas.GetLeft(enemy.Rectangle), Canvas.GetTop(enemy.Rectangle), enemy.Rectangle.Width, enemy.Rectangle.Height);
-
-                            //collision a health logika
-                            if (projectileHitBox.IntersectsWith(enemyHitBox))       
-                            {
-                                //ak sa projektil hráča zrazí s nepriateľom 
-                                itemsToRemove.Add(item);                    
-                                enemy.Health -= 1;                          
-
-                                if (enemy.Health <= 0)
-                                {
-                                    //ak život klesne na nulu, nepriateľ zmizne a hráč dostane body
-                                    itemsToRemove.Add(enemy.Rectangle);
-                                    totalEnemies -= 1;
-                                    scorePoints += enemy.PointValue;
-
-                                    if (scorePoints % extraLifeThreshold == 0)  
-                                    {
-                                        //v prípade, že hráč prekoná stanovenú hodnotu, získa život navyše
-                                        livesCount += 1;
-                                    }
-                                }
-                            }
+                            addPointsToThePlayer(enemy);
                         }
-                    }
-                }
-
-                if ((string)item.Tag == "enemy")
-                {
-                    //v každom Ticku GameTimeru sa každý nepriateľ vo wave posunie 
-                    //poloha je vypočítaná ako aktuálna poloha + rýchlosť * smer
-                    double currentLeft = Canvas.GetLeft(item);         
-                    double newLeft = currentLeft + defaultEnemySpeed * enemyDirection;
-
-                    if (newLeft < 0 || newLeft + item.Width > Application.Current.MainWindow.Width)
-                    {
-                        //zmena smeru keď sa enemy dostane na kraj okna. 1 je left to right, -1 je right to left
-                        enemyDirection *= -1;                   
-                        newLeft += defaultEnemySpeed * enemyDirection; 
-                    }
-
-                    Canvas.SetLeft(item, newLeft);
-
-                    Rect enemyHitBox = new Rect(Canvas.GetLeft(item), Canvas.GetTop(item), item.Width, item.Height);
-
-                    if (playerHitBox.IntersectsWith(enemyHitBox))       
-                    {
-                        //kolízna logika keď sa zrazí hráč s enemy. 
-                        //v tomto prípade hráč nedostane žiadne body, 
-                        //ale nepriateľa zničí na jeden náraz
-                        if (livesCount <= 0)                            
-                        {
-                            playerDeath();
-                            itemsToRemove.Add(item);        
-                        }
-                        else
-                        {
-                            //hráč buď zomrie, alebo sa mu uberie život
-                            livesCount -= 1;                
-                            itemsToRemove.Add(item);      
-                        }
-                        totalEnemies -= 1;
-                        explode();
-                        break;
-                    }
-                }
-
-                if ((string)item.Tag == "enemyProjectile")
-                {
-                    //posúvanie projektilu 
-                    Canvas.SetTop(item, Canvas.GetTop(item) + defaultEnemyProjectileVelocity);  
-                    if (Canvas.GetTop(item) > Application.Current.MainWindow.Height)
-                    {
-                        //odstránenie enemy projektilu, ktorý už nie je viditeľný
-                        itemsToRemove.Add(item);            
-                    }
-
-                    // hitbox na enemy projektil
-                    Rect enemyProjectileHitBox = new Rect(Canvas.GetLeft(item), Canvas.GetTop(item), item.Width, item.Height);
-
-                    // logika pre kolíziu hráča s enemy projektilom
-                    if (playerHitBox.IntersectsWith(enemyProjectileHitBox))  
-                    {
-                        if (livesCount <= 0)
-                        {
-                            playerDeath();
-                            itemsToRemove.Add(item);
-                        }
-                        else
-                        {
-                            livesCount -= 1;
-                            itemsToRemove.Add(item);
-                        }
-                        explode();
-                        break;
                     }
                 }
             }
+        }
 
+        private void removeProjectilesOutOfTheWindow(Rectangle item)
+        {
+            if (Canvas.GetTop(item) < windowTopSafeZone / defaultEnemyProjectileWidth)
+            {
+                //odstránenie projektilov 
+                //hráča ak pôjdu moc vysoko
+                itemsToRemove.Add(item);
+            }
+        }
+
+        private bool moveEnemy(Rectangle item)
+        {
+            double currentLeft = Canvas.GetLeft(item);
+            double newLeft = currentLeft + defaultEnemySpeed * enemyDirection;
+
+            if (newLeft < 0 || newLeft + item.Width > Application.Current.MainWindow.Width)
+            {
+                //zmena smeru keď sa enemy dostane na kraj okna. 1 je left to right, -1 je right to left
+                enemyDirection *= -1;
+                newLeft += defaultEnemySpeed * enemyDirection;
+            }
+
+            Canvas.SetLeft(item, newLeft);
+
+            Rect enemyHitBox = new Rect(Canvas.GetLeft(item), Canvas.GetTop(item), item.Width, item.Height);
+            Rect playerHitBox = new Rect(Canvas.GetLeft(player), Canvas.GetTop(player), player.Width, player.Height);
+
+            if (playerHitBox.IntersectsWith(enemyHitBox))
+            {
+                //kolízna logika keď sa zrazí hráč s enemy. 
+                //v tomto prípade hráč nedostane žiadne body, 
+                //ale nepriateľa zničí na jeden náraz
+                playerEnemyCollision(item);
+                return false;
+            }
+            return true;
+        }
+
+        private void playerEnemyCollision(Rectangle item)
+        {
+            if (livesCount <= 0)
+            {
+                playerDeath();
+                itemsToRemove.Add(item);
+            }
+            else
+            {
+                //hráč buď zomrie, alebo sa mu uberie život
+                livesCount -= 1;
+                itemsToRemove.Add(item);
+            }
+            if (item.Tag != "enemyProjectile")
+            {
+                totalEnemies -= 1;
+            }
+            explode();
+        }
+
+        private bool moveProjectile(Rectangle item)
+        {
+            Canvas.SetTop(item, Canvas.GetTop(item) + defaultEnemyProjectileVelocity);
+            if (Canvas.GetTop(item) > Application.Current.MainWindow.Height)
+            {
+                //odstránenie enemy projektilu, ktorý už nie je viditeľný
+                itemsToRemove.Add(item);
+            }
+
+            // hitbox na enemy projektil
+            Rect enemyProjectileHitBox = new Rect(Canvas.GetLeft(item), Canvas.GetTop(item), item.Width, item.Height);
+            Rect playerHitBox = new Rect(Canvas.GetLeft(player), Canvas.GetTop(player), player.Width, player.Height);
+
+            // logika pre kolíziu hráča s enemy projektilom
+            if (playerHitBox.IntersectsWith(enemyProjectileHitBox))
+            {
+                playerEnemyCollision(item);
+                return false;
+            }
+            return true;
+        }
+
+        private void removeUnusedItems()
+        {
             //odstraňovanie nepotrebných objektov (v každom ticku gametimeru)
             foreach (Rectangle item in itemsToRemove)
             {
                 myCanvas.Children.Remove(item);
             }
-
+        }
+        private void checkGameOver()
+        {
             //Víťazná podmienka (všetky waves sa skončili a žiaden nepriateľ nežije) 
-            if (totalEnemies<1 && waveNumber >=maxWaveNumber) 
+            if (totalEnemies < 1 && waveNumber >= maxWaveNumber)
             {
-               showGameOver("Victory");
+                showGameOver("Victory");
             }
-            else if (totalEnemies < 1) 
+            else if (totalEnemies < 1)
             {
-               //Logika v prípade, že hráč zabil všetkých nepriateľov vo wave
-               //GameTimer sa pozastaví, wavepattern sa vymaže a načíta sa novým potom sa timer znova spustí
-               gameTimer.Stop();
-               wavePatterns.Clear();
-               waveNumber+=1;
-               LoadWavePatterns($"../../../wave{waveNumber}.txt");
-               gameTimer.Start();
-               StartNextWave();
+                //Logika v prípade, že hráč zabil všetkých nepriateľov vo wave
+                //GameTimer sa pozastaví, wavepattern sa vymaže a načíta sa nový. Potom sa timer znova spustí
+                gameTimer.Stop();
+                wavePatterns.Clear();
+                waveNumber += 1;
+                LoadWavePatterns($"../../../wave{waveNumber}.txt");
+                gameTimer.Start();
+                StartNextWave();
             }
         }
 
@@ -488,12 +528,12 @@ namespace SpaceShooter
             }
         }
 
-        private void KeyIsDown(object sender, KeyEventArgs e) 
+        private void KeyIsDown(object sender, KeyEventArgs e)
         {
             //keyboard bindy, nastavuje booleany na true, ak je klávesa stlačená
-            if (e.Key == gameConfiguration.MoveLeftKey) 
-            { 
-                goLeft= true;
+            if (e.Key == gameConfiguration.MoveLeftKey)
+            {
+                goLeft = true;
             }
 
             if (e.Key == gameConfiguration.MoveRightKey)
@@ -516,13 +556,13 @@ namespace SpaceShooter
                 Shoot();
             }
 
-            if (e.Key == Key.Enter && gameOver==true)      
+            if (e.Key == Key.Enter && gameOver == true)
             {
                 //resetovanie hry v prípade, že skončila klávesou Enter
                 ResetGame();
             }
 
-            if (e.Key == Key.Escape && !gameOver)           
+            if (e.Key == Key.Escape && !gameOver)
             {
                 //Pause/Resume logika pre ESC
                 if (isPaused)
@@ -539,29 +579,29 @@ namespace SpaceShooter
         private void KeyIsUp(object sender, KeyEventArgs e)
         {
             //keyboard bindy, nastavuje booleany na false ak nie je klávesa stlačená
-            if (e.Key == gameConfiguration.MoveLeftKey) 
+            if (e.Key == gameConfiguration.MoveLeftKey)
             {
                 goLeft = false;
             }
 
-            if (e.Key == gameConfiguration.MoveRightKey) 
+            if (e.Key == gameConfiguration.MoveRightKey)
             {
                 goRight = false;
             }
 
-            if (e.Key == gameConfiguration.MoveUpKey) 
+            if (e.Key == gameConfiguration.MoveUpKey)
             {
                 goUp = false;
             }
 
-            if (e.Key == gameConfiguration.MoveDownKey) 
+            if (e.Key == gameConfiguration.MoveDownKey)
             {
                 goDown = false;
             }
         }
 
         private void MouseButtonDown(object sender, MouseButtonEventArgs e)
-        {   
+        {
             //handling mouse button eventu
             //v prípade, že je stlačený LMB, hra nie je ukončená, ani pozastavená, a hra je ovládaná myšou, tak vystrelí
             if (e.ChangedButton == MouseButton.Left && !gameOver && !isPaused && gameConfiguration.MouseControl)
@@ -570,39 +610,39 @@ namespace SpaceShooter
             }
         }
 
-        private void Shoot()                   
+        private void Shoot()
         {
             //Handling vytvárania projektilov hráča
             //projektilu vytvorí Rectangle objekt, s tagom pre jednoduchší management
-            Rectangle newBullet = new Rectangle     
+            Rectangle newBullet = new Rectangle
             {
                 Tag = "projectile",
-                Height = defaultEnemyProjectileHeight/2,
-                Width = defaultEnemyProjectileWidth/2,
+                Height = defaultEnemyProjectileHeight / 2,
+                Width = defaultEnemyProjectileWidth / 2,
                 Fill = Brushes.White,
                 Stroke = defaultPlayerProjectileColor,
             };
 
             //spawnovanie projektilu v strede hráča a nad ním
-            Canvas.SetTop(newBullet, Canvas.GetTop(player) - newBullet.Height);         
-            Canvas.SetLeft(newBullet, Canvas.GetLeft(player) + playerShipWidth / 4);        
+            Canvas.SetTop(newBullet, Canvas.GetTop(player) - newBullet.Height);
+            Canvas.SetLeft(newBullet, Canvas.GetLeft(player) + playerShipWidth / 4);
 
             myCanvas.Children.Add(newBullet);
         }
 
-        private void AnimationTick(object sender, EventArgs e)      
+        private void AnimationTick(object sender, EventArgs e)
         {
             //Handling animácie výbuchu 
             if (explosionAnimationProgress < explosionAnimationFrames)
             {
                 // for loop, ktorý prehrá animáciu výbuchu v poradí
-                foreach (var item in myCanvas.Children.OfType<Rectangle>().Where(item => (string)item.Tag == "playerExplosion")) 
+                foreach (var item in myCanvas.Children.OfType<Rectangle>().Where(item => (string)item.Tag == "playerExplosion"))
                 {
                     ((ImageBrush)item.Fill).ImageSource = explosionFrames[explosionAnimationProgress];
                 }
                 explosionAnimationProgress++;
             }
-            else 
+            else
             {
                 // ak sa animácia úspešne prehrá, tak snímky sa poodstraňujú, aby nezostali na obrazovke
                 var explosionRectangles = myCanvas.Children.OfType<Rectangle>().Where(item => (string)item.Tag == "playerExplosion").ToList();
@@ -615,40 +655,40 @@ namespace SpaceShooter
             }
         }
 
-        private void explode()              
+        private void explode()
         {
-            Rectangle playerExplosion = new Rectangle   
+            Rectangle playerExplosion = new Rectangle
             {
                 //animácii vytvorí Rectangle objekt
                 //kvôli handlingu animácie a odstráneniu nepotrebných snímkov má priradený Tag
-                Tag = "playerExplosion",                
+                Tag = "playerExplosion",
                 Height = playerExplosionDimension,
                 Width = playerExplosionDimension,
                 Fill = new ImageBrush
                 {
                     //počiatočne má ako fill prvý snímok animácie
-                    ImageSource = explosionFrames[0]    
+                    ImageSource = explosionFrames[0]
                 }
             };
 
             // umiestnenie výbuchu do stredu hráča
-            Canvas.SetTop(playerExplosion, Canvas.GetTop(player) - playerShipHeight/2) ; 
-            Canvas.SetLeft(playerExplosion, Canvas.GetLeft(player) - playerShipWidth/2) ;
+            Canvas.SetTop(playerExplosion, Canvas.GetTop(player) - playerShipHeight / 2);
+            Canvas.SetLeft(playerExplosion, Canvas.GetLeft(player) - playerShipWidth / 2);
 
             myCanvas.Children.Add(playerExplosion);
             //ak by sa progres animácie neresetoval, tak by sa pri ďalšom volaní mohla
             //prehrať od iného snímku ako je prvý
-            explosionAnimationProgress = 0; 
+            explosionAnimationProgress = 0;
             animationTimer.Start();
-        }       
+        }
 
-        private void enemyProjectileSpawner(double x, double y, Brush projectileColor)  
+        private void enemyProjectileSpawner(double x, double y, Brush projectileColor)
         {
             //spawnovanie nepriateľských projektilov
             //každému projektilu vytvorí Rectangle objekt, ktorý vyplní farbou projektilu
             //korešpondujúcou danému typu nepriateľa
-            Rectangle enemyProjectile = new Rectangle     
-            {                                             
+            Rectangle enemyProjectile = new Rectangle
+            {
                 Tag = "enemyProjectile",
                 Height = defaultEnemyProjectileHeight,
                 Width = defaultEnemyProjectileWidth,
@@ -658,98 +698,98 @@ namespace SpaceShooter
             };
 
             //umiestnenie projektilu do okna
-            Canvas.SetTop(enemyProjectile, y);          
+            Canvas.SetTop(enemyProjectile, y);
             Canvas.SetLeft(enemyProjectile, x);
 
             myCanvas.Children.Add(enemyProjectile);
         }
 
-        private void spawnEnemy(EnemyType enemyType,int x, int y) 
+        private void spawnEnemy(EnemyType enemyType, int x, int y)
         {
             //handluje spawnovanie jednotlivých nepriateľov
             //zvyšovanie counteru
-            totalEnemies += 1;                                     
+            totalEnemies += 1;
 
-                ImageBrush enemySkin = new ImageBrush();
-                Brush projectileColor = defaultProjectileColor;
-                
-                //každému nepriateľovi vytvorí Rectangle objekt,
-                //ktorý vyplní korešpondujúcou textúrou a kvôli
-                //manažmentu/kolíziám mu priradí Tag enemy
-                Rectangle newEnemy = new Rectangle                
-                {                                                 
-                    Tag = "enemy",                               
-                    Height = Enemy.DefaultHeight,
-                    Width = Enemy.DefaultWidth,
-                    Fill = enemySkin
-                };
+            ImageBrush enemySkin = new ImageBrush();
+            Brush projectileColor = defaultProjectileColor;
 
-                int enemyHealth=defaultEnemyHealth;
-                int enemyPointValue = defaultEnemyPointValue;
-                switch (enemyType)                              
-                {
+            //každému nepriateľovi vytvorí Rectangle objekt,
+            //ktorý vyplní korešpondujúcou textúrou a kvôli
+            //manažmentu/kolíziám mu priradí Tag enemy
+            Rectangle newEnemy = new Rectangle
+            {
+                Tag = "enemy",
+                Height = Enemy.DefaultHeight,
+                Width = Enemy.DefaultWidth,
+                Fill = enemySkin
+            };
+
+            int enemyHealth = defaultEnemyHealth;
+            int enemyPointValue = defaultEnemyPointValue;
+            switch (enemyType)
+            {
                 //podľa typu neprateľa sa nastavia parametre
                 //ako health, koĺko bodov za zabitie dostane hráč,
                 //farbu projektilu a textúru korešpondujúcu typu nepriateľa
-                    case EnemyType.Type1:                       
-                        enemyHealth = 2;
-                        enemyPointValue = 100;
-                        enemySkin.ImageSource = new BitmapImage(new Uri("pack://application:,,,/images/invader1.webp"));
-                        projectileColor = Brushes.Red;
-                        break;
+                case EnemyType.Type1:
+                    enemyHealth = 2;
+                    enemyPointValue = 100;
+                    enemySkin.ImageSource = new BitmapImage(new Uri("pack://application:,,,/images/invader1.png"));
+                    projectileColor = Brushes.Red;
+                    break;
 
-                    case EnemyType.Type2:
-                        enemyHealth = 3;
-                        enemyPointValue = 300;
-                        enemySkin.ImageSource = new BitmapImage(new Uri("pack://application:,,,/images/invader2.webp"));
-                        projectileColor = Brushes.Green;
-                        break;
+                case EnemyType.Type2:
+                    enemyHealth = 3;
+                    enemyPointValue = 300;
+                    enemySkin.ImageSource = new BitmapImage(new Uri("pack://application:,,,/images/invader2.png"));
+                    projectileColor = Brushes.Green;
+                    break;
 
-                    case EnemyType.Type3:
-                        enemyHealth = 4;
-                        enemyPointValue = 400;
-                        enemySkin.ImageSource = new BitmapImage(new Uri("pack://application:,,,/images/invader3.webp"));
-                        projectileColor = Brushes.Purple;
-                        break;
-                }
+                case EnemyType.Type3:
+                    enemyHealth = 4;
+                    enemyPointValue = 400;
+                    enemySkin.ImageSource = new BitmapImage(new Uri("pack://application:,,,/images/invader3.png"));
+                    projectileColor = Brushes.Purple;
+                    break;
+            }
 
-                //vytvorenie a umiestnenie Enemy objektu do okna
-                Enemy enemy = new Enemy(newEnemy, enemyHealth, enemyPointValue, projectileColor);     
-                                                                                                      
-                Canvas.SetTop(enemy.Rectangle, x);                                                    
-                Canvas.SetLeft(enemy.Rectangle, y);                                                   
+            //vytvorenie a umiestnenie Enemy objektu do okna
+            Enemy enemy = new Enemy(newEnemy, enemyHealth, enemyPointValue, projectileColor);
 
-                myCanvas.Children.Add(enemy.Rectangle);
-                //pridanie do listu nepriateľov
-                enemyList.Add(enemy);                                                                 
+            Canvas.SetTop(enemy.Rectangle, x);
+            Canvas.SetLeft(enemy.Rectangle, y);
+
+            myCanvas.Children.Add(enemy.Rectangle);
+            //pridanie do listu nepriateľov
+            enemyList.Add(enemy);
         }
 
-        private void SpawnEnemiesFromWavePattern(string[] wavePattern) 
+        private void SpawnEnemiesFromWavePattern(string[] wavePattern)
         {
             //rozmiestňuje nepriateľov v okne podľa patternu
             //prechádza každý row a column 
             //textového súboru, ktorý má v sebe wave
-            for (int row = 0; row < wavePattern.Length; row++)         
-            {                                   
+            for (int row = 0; row < wavePattern.Length; row++)
+            {
                 string rowConfig = wavePattern[row];
                 for (int col = 0; col < rowConfig.Length; col++)
                 {
                     char enemyChar = rowConfig[col];
                     //whitespace charactery znamenajú medzery medzi nepriateľmi
-                    if (enemyChar != ' ')                               
+                    if (enemyChar != ' ')
                     {
                         //podľa pozície v textovom súbore rozmiestňuje nepriateľov v okne
-                        int x = row * Enemy.DefaultWidth + windowTopSafeZone; 
+                        int x = row * Enemy.DefaultWidth + windowTopSafeZone;
                         int y = col * Enemy.DefaultHeight;
 
                         //volanie funkcie na spawnovanie nepriateľa na súradniciach podľa patternu
-                        spawnEnemy(ParseEnemyType(enemyChar), x, y);    
+                        spawnEnemy(ParseEnemyType(enemyChar), x, y);
                     }
                 }
             }
         }
 
-        private void StartNextWave()                        
+        private void StartNextWave()
         {
             //začne ďalšiu wave tým, že načíta korešpondujúci wavePattern
             //zo zoznamu a potom ho predá funkcii, ktorá má na starosť spawnovanie 
@@ -758,7 +798,7 @@ namespace SpaceShooter
             SpawnEnemiesFromWavePattern(wavePattern);
         }
 
-        private void LoadWavePatterns(string fileName)  
+        private void LoadWavePatterns(string fileName)
         {
             //loaduje obsah textového súboru do wavePatterns
             try
@@ -769,11 +809,11 @@ namespace SpaceShooter
             }
             catch (FileNotFoundException)
             {
-               //score.Content = "Not Found:" +fileName; //debugging statement
+                //score.Content = "Not Found:" +fileName; //debugging statement
             }
         }
 
-        private EnemyType ParseEnemyType(char enemyChar) 
+        private EnemyType ParseEnemyType(char enemyChar)
         {
             //parser enemyTypov z čísel v textovom súbore na EnemyType typy.
             switch (enemyChar)
@@ -785,19 +825,19 @@ namespace SpaceShooter
                 case '3':
                     return EnemyType.Type3;
                 default:
-                    return EnemyType.None; 
+                    return EnemyType.None;
             }
         }
 
         private void playerDeath()
         {
             //hráč zmizne s výbuchom a hra končí
-            player.Visibility = Visibility.Collapsed; 
+            player.Visibility = Visibility.Collapsed;
             explode();
             showGameOver("You died");
         }
 
-        private void showGameOver(string msg)       
+        private void showGameOver(string msg)
         {
             //zobrazenie Game Over, aj so správou (podľa toho, či hráč vyhral alebo prehral)
             gameOver = true;
@@ -807,7 +847,7 @@ namespace SpaceShooter
             score.Content += " " + msg + "!   Enter to play again";
         }
 
-        private void SwitchToMainMenu() 
+        private void SwitchToMainMenu()
         {
             //prepnutie do menu
             wavePatterns.Clear();
@@ -818,7 +858,7 @@ namespace SpaceShooter
             mainMenu.Focus();
         }
 
-        private void PauseGame()    
+        private void PauseGame()
         {
             //pauza
             isPaused = true;
@@ -827,7 +867,7 @@ namespace SpaceShooter
             myCanvas.Children.Add(pauseMenu);
         }
 
-        private void ResumeGame()   
+        private void ResumeGame()
         {
             //resume hry z paused state
             isPaused = false;
@@ -837,26 +877,26 @@ namespace SpaceShooter
             enemyShootingTimer.Start();
         }
 
-        private void ResetGame()    
+        private void ResetGame()
         {
             //resetovanie hry na default hodnotách
             if (pauseMenu is not null)
             {
                 //kontrola, aby som náhodou neodstraňoval pauseMenu, ktoré neexistuje
-                myCanvas.Children.Remove(pauseMenu);    
-            }                                           
-            myCanvas.Focus();  
-            isPaused = false; 
+                myCanvas.Children.Remove(pauseMenu);
+            }
+            myCanvas.Focus();
+            isPaused = false;
             gameOver = false;
             waveNumber = 0;
             wavePatterns.Clear();
             totalEnemies = 0;
             scorePoints = 0;
             livesCount = defaultLivesCount;
-            itemsToRemove.Clear(); 
+            itemsToRemove.Clear();
             player.Visibility = Visibility.Visible;
 
-            foreach (var item in myCanvas.Children.OfType<Rectangle>().ToList()) 
+            foreach (var item in myCanvas.Children.OfType<Rectangle>().ToList())
             {
                 //vymazanie nepotrebných assetov - keby som spravil .Clear(), tak by to zmazalo aj potrebné veci
                 if ((string)item.Tag == "enemy" || (string)item.Tag == "projectile" || (string)item.Tag == "enemyProjectile")

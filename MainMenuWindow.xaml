@@ -33,11 +33,9 @@
         </Grid.Resources>
 
        
-        <StackPanel VerticalAlignment="Top" HorizontalAlignment="Left" Height="305" Width="125" Margin="100,100,0,0">
+        <StackPanel VerticalAlignment="Top" HorizontalAlignment="Left" Height="180" Width="125" Margin="100,100,0,0">
             <Button Content="Start Game" Click="StartGame"/>
-            <Button Content="Select Level" Click="ShowLevelSelector" Foreground="#2f3133"/>
             <Button Content="Settings" Click="ShowSettings"/>
-            <Button Content="Stats" Click="ShowStats" Foreground="#2f3133"/>
             <Button Content="Quit" Click="QuitGame" />
         </StackPanel>
 

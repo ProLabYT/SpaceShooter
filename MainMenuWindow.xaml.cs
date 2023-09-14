@@ -2,7 +2,6 @@
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 
 namespace SpaceShooter
 {
@@ -24,14 +23,9 @@ namespace SpaceShooter
         //nasledujúce funkcie sú nabindované na tlačítka definované v MainMenuWindow.xaml súbore
         private void StartGame(object sender, RoutedEventArgs e) //tlačítko na začatie hry
         {
-            var mainWindow = new MainWindow(); 
+            var mainWindow = new MainWindow();
             this.Content = mainWindow;
             mainWindow.StartGame();
-        }
-
-        private void ShowLevelSelector(object sender, RoutedEventArgs e)
-        {
-            //nedokončený level selector
         }
 
         private void ShowSettings(object sender, RoutedEventArgs e) //tlačítko na otvorenie nastavení
@@ -39,14 +33,9 @@ namespace SpaceShooter
             this.Content = settingsControl;
         }
 
-        private void ShowStats(object sender, RoutedEventArgs e)
-        {
-            //nedokončené stats
-        }
-
         private void QuitGame(object sender, RoutedEventArgs e)
         {
             Application.Current.Shutdown();
-        }    
+        }
     }
 }
