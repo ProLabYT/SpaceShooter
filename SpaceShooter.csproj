@@ -65,9 +65,9 @@
     <Resource Include="images\invader3.png" />
     <Resource Include="images\menubackground.png" />
     <Resource Include="images\player.png" />
-    <Resource Include="wave1.txt" />
-    <Resource Include="wave2.txt" />
-    <Resource Include="wave3.txt" />
+    <Resource Include="wavepatterns\wave1.txt" />
+    <Resource Include="wavepatterns\wave2.txt" />
+    <Resource Include="wavepatterns\wave3.txt" />
   </ItemGroup>
 
 </Project>

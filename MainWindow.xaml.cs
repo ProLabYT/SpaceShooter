@@ -20,7 +20,6 @@ namespace SpaceShooter
         public Rectangle Rectangle { get; set; }
         public int Health { get; set; }
         public int PointValue { get; set; }
-        public int Speed { get; set; }
         public Brush ProjectileColor { get; set; }
 
         public Enemy(Rectangle rectangle, int health, int pointValue, Brush projectileColor)
@@ -102,7 +101,6 @@ namespace SpaceShooter
         private bool gameOver = false;
         private bool isPaused = false;
 
-        private Rect playerHitBox;
         Brush defaultProjectileColor = Brushes.Red;
         Brush defaultPlayerProjectileColor = Brushes.Blue;
 
@@ -184,7 +182,7 @@ namespace SpaceShooter
         {
             //štart hry, tým, že sa najprv načíta 
             //nový wavepattern a potom sa spustia timery 
-            LoadWavePatterns($"../../../wave{waveNumber}.txt");
+            LoadWavePatterns($"../../../wavepatterns/wave{waveNumber}.txt");
             enemyShootingTimer.Start();
             gameTimer.Start();
         }
@@ -262,16 +260,15 @@ namespace SpaceShooter
         private void GameLoop(object? sender, EventArgs e)
         {
             //každým tickom gametimeru sa vykoná
-            //Rect playerHitBox = new Rect(Canvas.GetLeft(player),Canvas.GetTop(player), player.Width,player.Height); //player hitbox 
-            // UI aktualizácia
-            score.Content = "Score: " + scorePoints /* + "     " + totalEnemies*/; //debugging statement
-            lives.Content = "Lives: " + livesCount;
-
-            movePlayer();
+            updateUI();
 
             if (gameConfiguration.MouseControl)
             {
                 movePlayerMouse();
+            }
+            else
+            {
+                movePlayer();
             }
 
             foreach (var item in myCanvas.Children.OfType<Rectangle>())
@@ -305,6 +302,13 @@ namespace SpaceShooter
 
             removeUnusedItems();
             checkGameOver();
+        }
+
+        private void updateUI()
+        {
+            // UI aktualizácia
+            score.Content = "Score: " + scorePoints /* + "     " + totalEnemies*/; //debugging statement
+            lives.Content = "Lives: " + livesCount;
         }
 
         private void movePlayer()
@@ -506,7 +510,7 @@ namespace SpaceShooter
                 gameTimer.Stop();
                 wavePatterns.Clear();
                 waveNumber += 1;
-                LoadWavePatterns($"../../../wave{waveNumber}.txt");
+                LoadWavePatterns($"../../../wavepatterns/wave{waveNumber}.txt");
                 gameTimer.Start();
                 StartNextWave();
             }
