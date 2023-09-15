@@ -5,7 +5,8 @@ using System.Windows.Controls;
 namespace SpaceShooter
 {
     /// <summary>
-    /// Interaction logic for PauseMenu.xaml
+    /// Reprezentácia Pause Menu počas hry. Obsahuje 3 tlačidlá definované v .xaml súbore a tu je ich implementácia.
+    /// Rovnako ako MainMenuWindow, obsahuje Event Handling metódy, ktoré spravujú eventy stlačených tlačidiel.
     /// </summary>
     public partial class PauseMenu : UserControl
     {

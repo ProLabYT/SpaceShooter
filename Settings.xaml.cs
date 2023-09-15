@@ -5,6 +5,11 @@ using System.Windows.Input;
 
 namespace SpaceShooter
 {
+    /// <summary>
+    /// Poskytuje metódy pre zmenu keybindov, na čítanie a zápis do konfiguračného súboru,
+    /// na čítanie stlačenej klávesy, na vstup kurzora do tlačidla, na obnovenie default nastavení
+    /// a na prepínanie naspäť do MainMenuWindow.
+    /// </summary>
     public partial class Settings : UserControl
     {
         public GameConfiguration gameConfiguration; //konfigurácia keybindov, ktoré sa dajú meniť
@@ -54,6 +59,9 @@ namespace SpaceShooter
                         break;
                     case ControlToRebind.FireKey:
                         gameConfiguration.FireKey = e.Key;
+                        break;
+                    default:
+                        ResetDefaults(null, null);
                         break;
                 }
                 currentControlToRebind = ControlToRebind.None; //resetovanie na ďalšie použitie

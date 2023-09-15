@@ -3,4 +3,4 @@ MoveDownKey=S
 MoveLeftKey=A
 MoveRightKey=D
 FireKey=Space
-MouseControl=True
+MouseControl=False

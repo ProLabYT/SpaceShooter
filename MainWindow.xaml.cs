@@ -14,7 +14,14 @@ namespace SpaceShooter
 {
     public class Enemy
     {
-        //trieda reprezentujúca nepriateľov (život, hodnotu v bodoch a farbu projektilov)
+        /// <summary>
+        /// trieda reprezentujúca nepriateľov (život, hodnotu v bodoch a farbu projektilov)
+        /// objekty tejto triedy vytvára metóda SpawnEnemy() z triedy MainWindow, ktorá berie 
+        /// ako parameter typ nepriateľa a súradnice, kam ho má umiestniť. Podľa typu nepriateľa
+        /// (definovaného v enum EnemyType) vytvorí Enemy objekt s parametrami korešpondujúcimi
+        /// k typu nepriateľa
+        /// </summary>
+
         public static int DefaultHeight = 50;
         public static int DefaultWidth = 50;
         public Rectangle Rectangle { get; set; }
@@ -42,7 +49,13 @@ namespace SpaceShooter
 
     public class GameConfiguration
     {
-        //trieda, ktorá udržiava keybindy 
+        /// <summary>
+        /// Trieda, ktorá udržiava keybindy pre rôzne controls. Pri spustení programu
+        /// sa vytvorí objekt gameConfiguration, ktorý vyplní metóda LoadKeybindsFromFile(),
+        /// ktorá prečíta obsah súboru config.txt. Ak je jeho obsah nesprávny, alebo 
+        /// súbor neexistuje, tak objekt gameConfiguration táto metóda vyplní default  
+        /// hodnotami definovanými v MainWindow.
+        /// </summary>        
         public Key MoveUpKey { get; set; }
         public Key MoveDownKey { get; set; }
         public Key MoveLeftKey { get; set; }
@@ -53,6 +66,13 @@ namespace SpaceShooter
 
     public partial class MainWindow : UserControl
     {
+        /// <summary>
+        /// Obsahuje hlavnú hernú logiku, hitboxy, pohyb hráča a nepriateľov, pohyb projektilov, 
+        /// kolízie, čítanie a parsovanie súborov waves.txt a config.txt, loading textúr pre hráča a
+        /// nepriateľov, metódy na resetovanie hry, pause menu event handling, odstraňovanie nepotrebných
+        /// objektov, animácie výbuchu hráča a podobne.
+        /// </summary>
+
         //list na wavepatterny z textových súborov
         private List<string[]> wavePatterns = new List<string[]>();
         //player movement booleany pre ovládanie klávesnicou
@@ -61,6 +81,7 @@ namespace SpaceShooter
         List<Rectangle> itemsToRemove = new List<Rectangle>();
 
         private GameConfiguration gameConfiguration;
+
         //default parametre, sú nastavené ako public aby súbory ako Settings.xaml ich mohli čítať
         public const Key DefaultMoveUpKey = Key.W;
         public const Key DefaultMoveDownKey = Key.S;
@@ -259,7 +280,10 @@ namespace SpaceShooter
 
         private void GameLoop(object? sender, EventArgs e)
         {
-            //každým tickom gametimeru sa vykoná
+            //každým tickom gametimeru sa vykoná (každých 5ms)
+            //má na starosti movement handling (buď myš, alebo keybindy - podla gameConfiguration)
+            //prechádza všetky existujúce Rectangle objekty, s ktorými jedná na základe ich tagov
+            //rieši kolízie a pohyb (projektilov, nepriateľov a nepriateľských projektilov)
             updateUI();
 
             if (gameConfiguration.MouseControl)
@@ -461,6 +485,9 @@ namespace SpaceShooter
             }
             if (item.Tag != "enemyProjectile")
             {
+                //keďže túto funkciu používam na kolíziu s nepriateľmi, aj
+                //ich projektilmi, je potrebné zabrániť znižovaniu counteru
+                //totalEnemies keď je hráč zasiahnutý projektilom
                 totalEnemies -= 1;
             }
             explode();
